@@ -1,0 +1,26 @@
+.gradle
+/build/
+!gradle/wrapper/gradle-wrapper.jar
+
+generated
+.DS_Store
+
+### VS Code ###
+.vscode/
+
+### STS ###
+.springBeans
+.sts4-cache
+bin/
+!**/src/main/**/bin/
+!**/src/test/**/bin/
+
+### LOG ###
+logs
+
+### IntelliJ IDEA ###
+.idea
+*.iws
+*.iml
+*.ipr
+
