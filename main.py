@@ -80,3 +80,6 @@ async def update_card(messages: str = Form(...)):
     logger.info(f"Response data: {response_data}")
 
     return JSONResponse(content=response_data)
+
+
+
