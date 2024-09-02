@@ -12,20 +12,35 @@ app = FastAPI()
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# 기존 /r2/code/list 엔드포인트
+# 공통코드 요청 관련 모델
 class Message(BaseModel):
     bid: str
     bkey: str
 
+    @validator('bid')
+    def validate_bid(cls, v):
+        if len(v) != 2 or v not in ['EV', 'KP']:
+            raise ValueError('bid는 "EV" 또는 "KP"이어야 합니다.')
+        return v
+
+    @validator('bkey')
+    def validate_bkey(cls, v):
+        if len(v) != 16:
+            raise ValueError('bkey는 16자리여야 합니다.')
+        return v
+
 @app.post("/r2/code/list")
-async def code_list(
-    bid: str = Form(...),
-    bkey: str = Form(...)
-):
+async def code_list(messages: str = Form(...)):
     try:
-        # Message 모델 검증
-        message_obj = Message(bid=bid, bkey=bkey)
+        # messages 필드의 JSON 데이터를 파싱하여 Pydantic 모델로 변환
+        parsed_data = json.loads(messages)
+        request_data = Message(**parsed_data)
+
+        # 요청받은 데이터를 로깅
+        logger.info(f"Received request data: {request_data}")
+
     except Exception as e:
+        logger.error(f"Validation error: {str(e)}")
         raise HTTPException(status_code=422, detail=str(e))
 
     # 데이터 파일 읽기
