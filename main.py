@@ -4,8 +4,9 @@ from fastapi.responses import JSONResponse
 from datetime import datetime
 import logging
 import json
+from pathlib import Path
 
-from models import Message, CardUpdateRequest  # models.py에서 임포트
+from models import Message, CardUpdateRequest, CardListRequest  # models.py에서 임포트
 
 app = FastAPI()
 
@@ -52,3 +53,36 @@ async def update_card(messages: str = Form(...)):
     logger.info(f"Response data: {response_data}")
 
     return JSONResponse(content=response_data)
+
+@app.post("/r2/card/list")
+async def list_card(messages: str = Form(...)):
+    try:
+        # 클라이언트가 보낸 messages 필드의 JSON 데이터를 파싱하여 Pydantic 모델로 변환
+        parsed_data = json.loads(messages)
+        request_data = CardListRequest(**parsed_data)
+        logger.info(f"Received request data: {request_data}")
+
+    except Exception as e:
+        logger.error(f"Validation error: {str(e)}")
+        raise HTTPException(status_code=422, detail=str(e))
+
+    # card_list_kind1.json 파일 경로
+    file_path = Path(__file__).parent / 'card_list_kind1.json'
+
+    try:
+        # JSON 파일 읽기
+        with open(file_path, 'r', encoding='utf-8') as f:
+            file_data = json.load(f)
+
+        # 응답 데이터를 로깅
+        logger.info(f"Response data: {file_data}")
+
+        # 파일 내용을 그대로 반환
+        return JSONResponse(content=file_data)
+
+    except FileNotFoundError:
+        logger.error(f"File not found: {file_path}")
+        raise HTTPException(status_code=404, detail="Requested data not found.")
+    except Exception as e:
+        logger.error(f"Error reading the file: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal Server Error")
