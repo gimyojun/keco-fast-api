@@ -6,7 +6,7 @@ import logging
 import json
 from pathlib import Path
 
-from models import Message, CardUpdateRequest, CardListRequest  # models.py에서 임포트
+from models import Message, CardUpdateRequest, CardListRequest, TradeRegiRequest, UseRegiRequest  # models.py에서 임포트
 
 app = FastAPI()
 
@@ -86,3 +86,51 @@ async def list_card(messages: str = Form(...)):
     except Exception as e:
         logger.error(f"Error reading the file: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal Server Error")
+
+@app.post("/r2/trade/regi")
+async def trade_regi(messages: str = Form(...)):
+    try:
+        parsed_data = json.loads(messages)
+        request_data = TradeRegiRequest(**parsed_data)
+        logger.info(f"Received request data: {request_data}")
+    except Exception as e:
+        logger.error(f"Validation error: {str(e)}")
+        raise HTTPException(status_code=422, detail=str(e))
+
+    response_data = {
+        "result": "0",
+        "rdate": datetime.now().strftime('%Y%m%d%H%M%S'),
+        "reqcnt": len(request_data.trade),
+        "inscnt": len(request_data.trade),  # 실제 등록된 건수로 수정 필요
+        "dupcnt": 0,  # 중복 건수로 수정 필요
+        "limitcnt": 0,
+        "errcnt": 0,
+        "errlist": []
+    }
+    logger.info(f"Response data: {response_data}")
+
+    return JSONResponse(content=response_data)
+
+@app.post("/r2/use/regi")
+async def use_regi(messages: str = Form(...)):
+    try:
+        parsed_data = json.loads(messages)
+        request_data = UseRegiRequest(**parsed_data)
+        logger.info(f"Received request data: {request_data}")
+    except Exception as e:
+        logger.error(f"Validation error: {str(e)}")
+        raise HTTPException(status_code=422, detail=str(e))
+
+    response_data = {
+        "result": "0",
+        "rdate": datetime.now().strftime('%Y%m%d%H%M%S'),
+        "reqcnt": len(request_data.use),
+        "inscnt": len(request_data.use),  # 실제 등록된 건수로 수정 필요
+        "dupcnt": 0,  # 중복 건수로 수정 필요
+        "limitcnt": 0,
+        "errcnt": 0,
+        "errlist": []
+    }
+    logger.info(f"Response data: {response_data}")
+
+    return JSONResponse(content=response_data)
