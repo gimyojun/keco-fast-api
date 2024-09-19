@@ -6,7 +6,7 @@ import logging
 import json
 from pathlib import Path
 
-from models import Message, CardUpdateRequest, CardListRequest, TradeRegiRequest, UseRegiRequest  # models.py에서 임포트
+from models import Message, CardUpdateRequest, CardListRequest, TradeRegiRequest, UseRegiRequest, TradeListRequest  # models.py에서 임포트
 
 app = FastAPI()
 
@@ -134,3 +134,30 @@ async def use_regi(messages: str = Form(...)):
     logger.info(f"Response data: {response_data}")
 
     return JSONResponse(content=response_data)
+
+@app.post("/r2/trade/list")
+async def trade_list(messages: str = Form(...)):
+    try:
+        parsed_data = json.loads(messages)
+        request_data = TradeListRequest(**parsed_data)
+        logger.info(f"Received request data: {request_data}")
+    except Exception as e:
+        logger.error(f"Validation error: {str(e)}")
+        raise HTTPException(status_code=422, detail=str(e))
+
+    file_path = Path(__file__).parent / 'trade_list_kind1.json'
+
+    try:
+        with open(file_path, 'r', encoding='utf-8') as f:
+            file_data = json.load(f)
+
+        logger.info(f"Response data: {file_data}")
+
+        return JSONResponse(content=file_data)
+
+    except FileNotFoundError:
+        logger.error(f"File not found: {file_path}")
+        raise HTTPException(status_code=404, detail="Requested data not found.")
+    except Exception as e:
+        logger.error(f"Error reading the file: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal Server Error")
