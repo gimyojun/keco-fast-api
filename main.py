@@ -135,7 +135,7 @@ async def use_regi(messages: str = Form(...)):
 
     return JSONResponse(content=response_data)
 
-@app.post("/r2/trade/list")
+@app.post("/r2/trade/listall")
 async def trade_list(messages: str = Form(...)):
     try:
         parsed_data = json.loads(messages)
