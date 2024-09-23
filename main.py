@@ -145,7 +145,7 @@ async def trade_list(messages: str = Form(...)):
         logger.error(f"Validation error: {str(e)}")
         raise HTTPException(status_code=422, detail=str(e))
 
-    file_path = Path(__file__).parent / 'trade_list_kind1.json'
+    file_path = Path(__file__).parent / 'trade_list_kind1_response.json'
 
     try:
         with open(file_path, 'r', encoding='utf-8') as f:
