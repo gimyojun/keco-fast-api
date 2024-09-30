@@ -259,3 +259,26 @@ class ChargerStatusUpdateRequest(BaseModel):
             if 'status' not in item or item['status'] not in ['0', '1', '2', '3', '4', '5', '6']:
                 raise ValueError('status는 "0", "1", "2", "3", "4", "5", "6" 중 하나여야 합니다.')
         return v
+
+class ChargerInfoListRequest(BaseModel):
+    bid: str
+    bkey: str
+    kind: str
+
+    @validator('bid')
+    def validate_bid(cls, v):
+        if len(v) != 2 or v not in ['EV', 'KP']:
+            raise ValueError('bid는 "EV" 또는 "KP"이어야 합니다.')
+        return v
+
+    @validator('bkey')
+    def validate_bkey(cls, v):
+        if len(v) != 16:
+            raise ValueError('bkey는 16자리여야 합니다.')
+        return v
+
+    @validator('kind')
+    def validate_kind(cls, v):
+        if v not in ['1', '2', '3']:
+            raise ValueError('kind는 "1", "2", "3" 중 하나여야 합니다.')
+        return v
