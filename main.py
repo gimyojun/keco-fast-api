@@ -6,7 +6,7 @@ import logging
 import json
 from pathlib import Path
 
-from models import Message, CardUpdateRequest, CardListRequest, TradeRegiRequest, UseRegiRequest, TradeListRequest, ChargerStatusRequest, ChargerInfoListRequest  # models.py에서 임포트
+from models import Message, CardUpdateRequest, CardListRequest, TradeRegiRequest, UseRegiRequest, TradeListRequest, ChargerStatusRequest, ChargerInfoListRequest, ChargerStatusUpdateRequest  # models.py에서 임포트
 
 app = FastAPI()
 
@@ -188,3 +188,26 @@ async def charger_info_list(messages: str = Form(...)):
     except Exception as e:
         logger.error(f"Error reading the file: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal Server Error")
+
+@app.post("/r2/charger/status/update")
+async def charger_status_update(messages: str = Form(...)):
+    try:
+        parsed_data = json.loads(messages)
+        request_data = ChargerStatusUpdateRequest(**parsed_data)
+        logger.info(f"Received request data: {request_data}")
+    except Exception as e:
+        logger.error(f"Validation error: {str(e)}")
+        raise HTTPException(status_code=422, detail=str(e))
+
+    response_data = {
+        "result": "0",
+        "rdate": datetime.now().strftime('%Y%m%d%H%M%S'),
+        "reqcnt": len(request_data.cstat),
+        "updcnt": len(request_data.cstat),  # 실제 갱신된 건수로 수정 필요
+        "limitcnt": 0,
+        "errcnt": 0,
+        "errlist": []
+    }
+    logger.info(f"Response data: {response_data}")
+
+    return JSONResponse(content=response_data)
