@@ -154,15 +154,20 @@ async def trade_list(messages: str = Form(...)):
     }
 
     # pageno 가져오기
-    pageno = parsed_data.get("pageno", "1")
-    file_name = file_map.get(pageno, 'trade_list_kind1_response.json')
+    pageno = str(parsed_data.get("pageno", "1"))
+    
+    if pageno not in file_map:
+        logger.error(f"Invalid pageno: {pageno}")
+        raise HTTPException(status_code=400, detail="Invalid pageno")
+
+    file_name = file_map[pageno]
     file_path = Path(__file__).parent / file_name
 
     try:
         with open(file_path, 'r', encoding='utf-8') as f:
             file_data = json.load(f)
 
-        logger.info(f"Response data: {file_data}")
+        logger.info(f"Response data for pageno {pageno}: {file_data}")
 
         return JSONResponse(content=file_data)
 
@@ -172,7 +177,6 @@ async def trade_list(messages: str = Form(...)):
     except Exception as e:
         logger.error(f"Error reading the file: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal Server Error")
-
 @app.post("/r2/charger/info/list")
 async def charger_info_list(messages: str = Form(...)):
     try:
