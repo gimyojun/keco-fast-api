@@ -135,12 +135,6 @@ class TradeRegiRequest(BaseModel):
             raise ValueError('bid는 "EV" 또는 "KP"이어야 합니다.')
         return v
 
-    @validator('bkey')
-    def validate_bkey(cls, v):
-        if len(v) != 16:
-            raise ValueError('bkey는 16자리여야 합니다.')
-        return v
-
 class Use(BaseModel):
     sid: str
     cid: str
@@ -309,4 +303,28 @@ class ChargerStatusUpdateRequest(BaseModel):
                 raise ValueError('cid는 2자리여야 합니다.')
             if 'status' not in item or item['status'] not in ['0', '1', '2', '3', '4', '5', '6']:
                 raise ValueError('status는 "0", "1", "2", "3", "4", "5", "6" 중 하나여야 합니다.')
+        return v
+
+class ChargerQRRequest(BaseModel):
+    bid: str
+    bkey: str
+    pageno: str
+    pagesize: str
+
+    @validator('bid')
+    def validate_bid(cls, v):
+        if len(v) > 20:
+            raise ValueError('bid는 20자리 이하여야 합니다.')
+        return v
+
+    @validator('bkey')
+    def validate_bkey(cls, v):
+        if len(v) != 16:
+            raise ValueError('bkey는 16자리여야 합니다.')
+        return v
+
+    @validator('pageno')
+    def validate_pageno(cls, v):
+        if not v.isdigit() or len(v) > 5:
+            raise ValueError('pageno는 5자리 이하의 숫자여야 합니다.')
         return v

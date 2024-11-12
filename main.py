@@ -6,7 +6,7 @@ import logging
 import json
 from pathlib import Path
 
-from models import Message, CardUpdateRequest, CardListRequest, TradeRegiRequest, UseRegiRequest, TradeListRequest, ChargerStatusRequest, ChargerInfoListRequest, ChargerStatusUpdateRequest  # models.py에서 임포트
+from models import Message, CardUpdateRequest, CardListRequest, TradeRegiRequest, UseRegiRequest, TradeListRequest, ChargerStatusRequest, ChargerInfoListRequest, ChargerStatusUpdateRequest, ChargerQRRequest  # models.py에서 임포트
 
 app = FastAPI()
 
@@ -305,8 +305,8 @@ async def trade_list(messages: str = Form(...)):
     except Exception as e:
         logger.error(f"Validation error: {str(e)}")
         raise HTTPException(status_code=422, detail=str(e))
-
-    file_path = Path(__file__).parent / 'trade_listall_kind1_response_1027_1028.json'
+    #937건
+    file_path = Path(__file__).parent / 'hyojun.json'
 
     try:
         with open(file_path, 'r', encoding='utf-8') as f:
@@ -314,6 +314,46 @@ async def trade_list(messages: str = Form(...)):
 
         logger.info(f"Response data: {file_data}")
 
+        return JSONResponse(content=file_data)
+
+    except FileNotFoundError:
+        logger.error(f"File not found: {file_path}")
+        raise HTTPException(status_code=404, detail="Requested data not found.")
+    except Exception as e:
+        logger.error(f"Error reading the file: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal Server Error")
+
+@app.post("/p1/charger/qr")
+async def charger_qr_info(messages: str = Form(...)):
+    try:
+        parsed_data = json.loads(messages)
+        request_data = ChargerQRRequest(**parsed_data)
+        logger.info(f"Received request data: {request_data}")
+    except Exception as e:
+        logger.error(f"Validation error: {str(e)}")
+        raise HTTPException(status_code=422, detail=str(e))
+
+    # pageno에 따라 파일 경로 설정
+    file_map = {
+        "1": 'charger_qr_info_page1.json',
+        "2": 'charger_qr_info_page2.json',
+        "3": 'charger_qr_info_page3.json'
+    }
+
+    pageno = str(parsed_data.get("pageno", "1"))
+    
+    if pageno not in file_map:
+        logger.error(f"Invalid pageno: {pageno}")
+        raise HTTPException(status_code=400, detail="Invalid pageno")
+
+    file_name = file_map[pageno]
+    file_path = Path(__file__).parent / file_name
+
+    try:
+        with open(file_path, 'r', encoding='utf-8') as f:
+            file_data = json.load(f)
+
+        logger.info(f"Response data for pageno {pageno}: {file_data}")
         return JSONResponse(content=file_data)
 
     except FileNotFoundError:
