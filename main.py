@@ -5,14 +5,18 @@ from datetime import datetime
 import logging
 import json
 from pathlib import Path
+import random
 
-from models import Message, CardUpdateRequest, CardListRequest, TradeRegiRequest, UseRegiRequest, TradeListRequest, ChargerStatusRequest, ChargerInfoListRequest, ChargerStatusUpdateRequest, ChargerQRRequest  # models.py에서 임포트
+from models import Message, CardUpdateRequest, CardListRequest, TradeRegiRequest, UseRegiRequest, TradeListRequest, ChargerStatusRequest, ChargerInfoListRequest, ChargerStatusUpdateRequest, ChargerQRRequest, ChargingStationUpdateRequest, ChargerUpdateRequest  # models.py에서 임포트
 
 app = FastAPI()
 
 # 로깅 설정
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+def generate_random_number():
+    return str(random.randint(100000, 999999))
 
 @app.post("/r2/code/list")
 async def code_list(messages: str = Form(...)):
@@ -67,7 +71,7 @@ async def list_card(messages: str = Form(...)):
         raise HTTPException(status_code=422, detail=str(e))
 
     # card_list_kind1.json 파일 경로
-    file_path = Path(__file__).parent / 'card_listall_kind1_response_0929.json'
+    file_path = Path(__file__).parent / 'latest_card.json'
 
     try:
         # JSON 파일 읽기
@@ -266,9 +270,8 @@ async def charger_info_listall(messages: str = Form(...)):
 
     # pageno에 따라 파일 경로 설정
     file_map = {
-        "1": 'charger_info_list_response1.json',
-        "2": 'charger_info_list_response2.json',
-        "3": 'charger_info_list_response3.json'
+        "1": 'latest_chargerinfo1.json',
+        "2": 'charger_info_list_response3.json'
     }
 
     # pageno 가져오기
@@ -362,3 +365,295 @@ async def charger_qr_info(messages: str = Form(...)):
     except Exception as e:
         logger.error(f"Error reading the file: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal Server Error")
+
+@app.post("/evapi/v200/{spid}/cs/update")
+async def update_charging_station(spid: str, request_data: dict):
+    try:
+        logger.info(f"Received request data: {request_data}")
+        list_data = request_data.get('list', [])
+        
+        current_time = datetime.now().strftime('%Y%m%d%H%M%S')
+        
+        response_data = {
+            "result": "0",
+            "errcode": "",
+            "resultmsg": "",
+            "datetime": current_time,
+            "errlist": [],
+            "snd_cnt": len(list_data),
+            "rcv_cnt": 0,
+            "nor_cnt": len(list_data),
+            "ins_cnt": len(list_data),
+            "upd_cnt": 0,
+            "err_cnt": 0,
+            "list": [
+                {
+                    "spid": item['spid'],
+                    "csid": f"{item['spid']}S{generate_random_number()}",
+                    "spcsid": item['spcsid']
+                } for item in list_data
+            ]
+        }
+
+        if not list_data:
+            response_data.update({
+                "result": "0",
+                "errcode": "600",
+                "resultmsg": "조회/처리 데이터 없음"
+            })
+        
+        return JSONResponse(content=response_data)
+        
+    except KeyError as e:
+        logger.error(f"Validation error: {str(e)}")
+        return JSONResponse(
+            content={
+                "result": "2",
+                "errcode": "300",
+                "resultmsg": f"필수 필드 누락: {str(e)}",
+                "datetime": datetime.now().strftime('%Y%m%d%H%M%S'),
+                "errlist": [],
+                "snd_cnt": 0,
+                "rcv_cnt": 0,
+                "nor_cnt": 0,
+                "ins_cnt": 0,
+                "upd_cnt": 0,
+                "err_cnt": 1
+            },
+            status_code=400
+        )
+    except Exception as e:
+        logger.error(f"System error: {str(e)}")
+        return JSONResponse(
+            content={
+                "result": "2",
+                "errcode": "100",
+                "resultmsg": str(e),
+                "datetime": datetime.now().strftime('%Y%m%d%H%M%S'),
+                "errlist": [],
+                "snd_cnt": 0,
+                "rcv_cnt": 0,
+                "nor_cnt": 0,
+                "ins_cnt": 0,
+                "upd_cnt": 0,
+                "err_cnt": 1
+            },
+            status_code=500
+        )
+
+@app.post("/evapi/v200/{spid}/cp/update")
+async def update_charger(spid: str, request_data: dict):
+    try:
+        logger.info(f"Received request data: {request_data}")
+        list_data = request_data.get('list', [])
+        
+        current_time = datetime.now().strftime('%Y%m%d%H%M%S')
+        
+        response_data = {
+            "result": "0",
+            "errcode": "",
+            "resultmsg": "",
+            "datetime": current_time,
+            "errlist": [],
+            "snd_cnt": len(list_data),
+            "rcv_cnt": 0,
+            "nor_cnt": len(list_data),
+            "ins_cnt": len(list_data),
+            "upd_cnt": 0,
+            "err_cnt": 0,
+            "list": [
+                {
+                    "spid": item['spid'],
+                    "csid": item['csid'],
+                    "cpid": f"{item['spid']}E{generate_random_number()}",
+                    "spcsid": item['spcsid'],
+                    "spcpid": item['spcpid']
+                } for item in list_data
+            ]
+        }
+
+        if not list_data:
+            response_data.update({
+                "result": "0",
+                "errcode": "600",
+                "resultmsg": "조회/처리 데이터 없음"
+            })
+        
+        return JSONResponse(content=response_data)
+        
+    except KeyError as e:
+        logger.error(f"Validation error: {str(e)}")
+        return JSONResponse(
+            content={
+                "result": "2",
+                "errcode": "300",
+                "resultmsg": f"필수 필드 누락: {str(e)}",
+                "datetime": datetime.now().strftime('%Y%m%d%H%M%S'),
+                "errlist": [],
+                "snd_cnt": 0,
+                "rcv_cnt": 0,
+                "nor_cnt": 0,
+                "ins_cnt": 0,
+                "upd_cnt": 0,
+                "err_cnt": 1
+            },
+            status_code=400
+        )
+    except Exception as e:
+        logger.error(f"System error: {str(e)}")
+        return JSONResponse(
+            content={
+                "result": "2",
+                "errcode": "100",
+                "resultmsg": str(e),
+                "datetime": datetime.now().strftime('%Y%m%d%H%M%S'),
+                "errlist": [],
+                "snd_cnt": 0,
+                "rcv_cnt": 0,
+                "nor_cnt": 0,
+                "ins_cnt": 0,
+                "upd_cnt": 0,
+                "err_cnt": 1
+            },
+            status_code=500
+        )
+
+@app.post("/evapi/v200/{spid}/cp/status/update")
+async def update_charger_status(spid: str, request_data: dict):
+    try:
+        logger.info(f"Received request data: {request_data}")
+        list_data = request_data.get('list', [])
+        
+        current_time = datetime.now().strftime('%Y%m%d%H%M%S')
+        
+        response_data = {
+            "result": "0",
+            "datetime": current_time,
+            "snd_cnt": len(list_data),
+            "nor_cnt": len(list_data),
+            "ins_cnt": 0,  # 상태 업데이트는 신규등록이 아님
+            "upd_cnt": len(list_data),  # 모두 업데이트로 처리
+            "err_cnt": 0,
+            "list": [
+                {
+                    "spid": item['spid'],
+                    "csid": item['csid'],
+                    "cpid": item['cpid'],
+                    "spcsid": item['spcsid'],
+                    "spcpid": item['spcpid'],
+                    "update_time": item['update_time']
+                } for item in list_data
+            ]
+        }
+
+        if not list_data:
+            response_data.update({
+                "result": "0",
+                "snd_cnt": 0,
+                "nor_cnt": 0,
+                "ins_cnt": 0,
+                "upd_cnt": 0,
+                "err_cnt": 0,
+                "list": []
+            })
+        
+        return JSONResponse(content=response_data)
+        
+    except KeyError as e:
+        logger.error(f"Validation error: {str(e)}")
+        return JSONResponse(
+            content={
+                "result": "2",
+                "datetime": datetime.now().strftime('%Y%m%d%H%M%S'),
+                "snd_cnt": 0,
+                "nor_cnt": 0,
+                "ins_cnt": 0,
+                "upd_cnt": 0,
+                "err_cnt": 1,
+                "list": []
+            },
+            status_code=400
+        )
+    except Exception as e:
+        logger.error(f"System error: {str(e)}")
+        return JSONResponse(
+            content={
+                "result": "2",
+                "datetime": datetime.now().strftime('%Y%m%d%H%M%S'),
+                "snd_cnt": 0,
+                "nor_cnt": 0,
+                "ins_cnt": 0,
+                "upd_cnt": 0,
+                "err_cnt": 1,
+                "list": []
+            },
+            status_code=500
+        )
+
+@app.post("/evapi/v200/{spid}/uid/update")
+async def update_user_info(spid: str, request_data: dict):
+    try:
+        logger.info(f"Received request data: {request_data}")
+        list_data = request_data.get('list', [])
+        
+        current_time = datetime.now().strftime('%Y%m%d%H%M%S')
+        
+        response_data = {
+            "result": "0",
+            "datetime": current_time,
+            "snd_cnt": len(list_data),
+            "nor_cnt": len(list_data),
+            "ins_cnt": 0,  # 회원정보 업데이트는 신규등록이 아님
+            "upd_cnt": len(list_data),  # 모두 업데이트로 처리
+            "err_cnt": 0,
+            "list": [
+                {
+                    "spid": item['spid'],
+                    "cardno": item['cardno']
+                } for item in list_data
+            ]
+        }
+
+        if not list_data:
+            response_data.update({
+                "result": "0",
+                "snd_cnt": 0,
+                "nor_cnt": 0,
+                "ins_cnt": 0,
+                "upd_cnt": 0,
+                "err_cnt": 0,
+                "list": []
+            })
+        
+        return JSONResponse(content=response_data)
+        
+    except KeyError as e:
+        logger.error(f"Validation error: {str(e)}")
+        return JSONResponse(
+            content={
+                "result": "2",
+                "datetime": datetime.now().strftime('%Y%m%d%H%M%S'),
+                "snd_cnt": 0,
+                "nor_cnt": 0,
+                "ins_cnt": 0,
+                "upd_cnt": 0,
+                "err_cnt": 1,
+                "list": []
+            },
+            status_code=400
+        )
+    except Exception as e:
+        logger.error(f"System error: {str(e)}")
+        return JSONResponse(
+            content={
+                "result": "2",
+                "datetime": datetime.now().strftime('%Y%m%d%H%M%S'),
+                "snd_cnt": 0,
+                "nor_cnt": 0,
+                "ins_cnt": 0,
+                "upd_cnt": 0,
+                "err_cnt": 1,
+                "list": []
+            },
+            status_code=500
+        )

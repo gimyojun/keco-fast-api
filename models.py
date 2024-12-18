@@ -148,7 +148,7 @@ class Use(BaseModel):
     @validator('sid')
     def validate_sid(cls, v):
         if len(v) != 6 or not v.isdigit():
-            raise ValueError('충전소ID는 6자리 숫자형식입니다.')
+            raise ValueError('충전소ID는 6자리 숫자형식입니��.')
         return v
 
     @validator('cid')
@@ -308,23 +308,113 @@ class ChargerStatusUpdateRequest(BaseModel):
 class ChargerQRRequest(BaseModel):
     bid: str
     bkey: str
-    pageno: str
-    pagesize: str
+    pageno: int
+    pagesize: int
 
-    @validator('bid')
-    def validate_bid(cls, v):
-        if len(v) > 20:
-            raise ValueError('bid는 20자리 이하여야 합니다.')
+class ChargingStationUpdate(BaseModel):
+    spid: str
+    csid: str = ""
+    csnm: str
+    daddr: str
+    addr: str = ""
+    addr_dtl: str = ""
+    lat: str
+    longi: str
+    use_time: str
+    show_yn: str
+    spcsid: str
+    park_fee_yn: str
+    park_fee: str
+    spcall: str
+    member_yn: str
+    open_yn: str
+    use_yn: str
+    postcd: str
+    cs_div: str
+    sido: str
+    sigungu: str
+    oper_st_ymd: str
+    oper_end_ymd: str
+    plusdr_yn: str = ""
+    me_cs_id: str
+
+    @validator('spid')
+    def validate_spid(cls, v):
+        if len(v) != 3:
+            raise ValueError('spid는 3자리여야 합니다.')
         return v
 
-    @validator('bkey')
-    def validate_bkey(cls, v):
-        if len(v) != 16:
-            raise ValueError('bkey는 16자리여야 합니다.')
+class ChargingStationUpdateRequest(BaseModel):
+    spkey: str
+    list: List[ChargingStationUpdate]
+
+class ChargerUpdate(BaseModel):
+    spid: str
+    csid: str
+    cpid: str
+    cpnm: str
+    use_time: str
+    open_yn: str
+    show_yn: str
+    spcsid: str = ""
+    spcpid: str = ""
+    charge_ucost1: str
+    charge_ucost2: str = ""
+    charge_ucost3: str = ""
+    use_yn: str
+    oper_st_ymd: str
+    oper_end_ymd: str
+    outlet_cnt: str
+    pnc_yn: str = "N"
+    cpkw: str
+    charge_div: str
+    cp_div: str
+    postcd: str
+    cs_div: str
+    outlet_div: str
+    conn_div: str
+    charge_kw: str
+    service_div: str
+    net_div: str
+    auth_div: str
+    compty_div: str
+    ami_cert: str = ""
+    reserv_yn: str = "N"
+    qrid: str = ""
+    me_cs_id: str
+    me_cp_id: str
+
+    @validator('spid')
+    def validate_spid(cls, v):
+        if len(v) != 3:
+            raise ValueError('spid는 3자리여야 합니다.')
         return v
 
-    @validator('pageno')
-    def validate_pageno(cls, v):
-        if not v.isdigit() or len(v) > 5:
-            raise ValueError('pageno는 5자리 이하의 숫자여야 합니다.')
+    @validator('open_yn', 'show_yn', 'use_yn', 'pnc_yn', 'reserv_yn')
+    def validate_yn_fields(cls, v):
+        if v not in ['Y', 'N']:
+            raise ValueError('Y/N 필드는 "Y" 또는 "N"이어야 합니다.')
         return v
+
+    @validator('oper_st_ymd', 'oper_end_ymd')
+    def validate_oper_date(cls, v):
+        if len(v) != 8 or not v.isdigit():
+            raise ValueError('날짜는 8자리 숫자형식(YYYYMMDD)이어야 합니다.')
+        return v
+
+    @validator('me_cs_id')
+    def validate_me_cs_id(cls, v):
+        if len(v) != 6 or not v.isdigit():
+            raise ValueError('환경부 충전소ID는 6자리 숫자여야 합니다.')
+        return v
+
+    @validator('me_cp_id')
+    def validate_me_cp_id(cls, v):
+        if len(v) != 2 or not v.isdigit():
+            raise ValueError('환경부 충전기ID는 2자리 숫자여야 합니다.')
+        return v
+
+class ChargerUpdateRequest(BaseModel):
+    spkey: str
+    list: List[ChargerUpdate]
+
